@@ -1,0 +1,37 @@
+@font-face {
+    font-family: 'Varela Round', sans-serif;
+}
+
+body {
+  height: 1200px;
+  padding-left: 10%;
+  padding-right: 10%;
+  align-content: center;
+  align-self: center;
+  align-items: center;
+  background: linear-gradient(to top, #0c233e, #293665);
+  font-family: 'Varela Round';
+  color: azure;
+}
+
+#title{
+    font-family: 'Varela Round';
+    font-size: 45;
+    text-align: center;
+    color: #ffffff;
+}
+
+#explanation {
+  margin-top: 50px;
+}
+
+strong,em {
+  font-style: normal;
+  font-size: 1.1em;
+}
+
+#bang {
+  text-align: center;
+  font-weight: 700;
+  font-size: 3em;
+}
