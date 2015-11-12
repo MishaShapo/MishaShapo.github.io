@@ -39,3 +39,8 @@ strong,em {
 a {
   color: lawngreen
 }
+
+div #game-container {
+  width: 50%;
+  margin: 0 auto;
+}
