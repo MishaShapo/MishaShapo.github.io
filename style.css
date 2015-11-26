@@ -40,7 +40,9 @@ a {
   color: lawngreen
 }
 
-div #game-container {
-  width: 50%;
-  margin: 0 auto;
-}
+/*
+#game-container {
+  max-width: 570px;
+  width: 100%
+  margin: 0 0;
+}*/

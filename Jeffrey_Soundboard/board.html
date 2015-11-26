@@ -39,11 +39,19 @@
     <script src="src/Game.js"></script>
     <script src="lib/phaser-kinetic-scrolling-plugin.min.js"></script>
     <!-- Load game entrance -->
-    
+    <style>
+      .game-container{
+        max-height: 960;
+        max-width: 560;
+        margin: 0 auto;
+      }
+    </style>
 </head>
 <body>
     <!-- Main canvas for rendering game stage -->
-    <div id="game-container">
+    <div id="game-parent">
+      <div id="game-container">
+      </div>
     </div>
     <script>
       window.onload = function(){
