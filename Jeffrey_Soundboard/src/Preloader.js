@@ -42,7 +42,6 @@ JeffreySoundboard.Preloader.prototype = {
         this.load.audio('Aww_Dang',['assets/sfx/Aww_Dang.ogg','assets/sfx/Aww_Dang.mp3']);
         this.load.audio('Best_of_Luck',['assets/sfx/Best_of_Luck.ogg','assets/sfx/Best_of_Luck.mp3']);
         this.load.audio('Ehhhhhh',['assets/sfx/Ehhhhhh.ogg','assets/sfx/Ehhhhhh.mp3']);
-        this.load.audio('Ghey,Ghey,Ghey',['assets/sfx/Ghey,Ghey,Ghey.ogg','assets/sfx/Ghey,Ghey,Ghey.mp3']);
         this.load.audio('Higher Noice',['assets/sfx/Higher Noice.ogg','assets/sfx/Higher Noice.mp3']);
         this.load.audio('Hmmm',['assets/sfx/Hmmm.ogg','assets/sfx/Hmmm.mp3']);
         this.load.audio('Holy_Balls',['assets/sfx/Holy_Balls.ogg','assets/sfx/Holy_Balls.mp3']);
@@ -57,6 +56,7 @@ JeffreySoundboard.Preloader.prototype = {
         this.load.audio('Low_Oh_Baby',['assets/sfx/Low_Oh_Baby.ogg','assets/sfx/Low_Oh_Baby.mp3']);
         this.load.audio('Noice',['assets/sfx/Noice.ogg','assets/sfx/Noice.mp3']);
         this.load.audio('OH Dang',['assets/sfx/OH Dang.ogg','assets/sfx/OH Dang.mp3']);
+        this.load.audio('Ghey,Ghey,Ghey',['assets/sfx/Ghey,Ghey,Ghey.ogg','assets/sfx/Ghey,Ghey,Ghey.mp3']);
         this.load.audio('Ohhh_Yeaahhh',['assets/sfx/Ohhh_Yeaahhh.ogg','assets/sfx/Ohhh_Yeaahhh.mp3']);
         this.load.audio('Really_Clever',['assets/sfx/Really_Clever.ogg','assets/sfx/Really_Clever.mp3']);
         this.load.audio('Show_Your_Work',['assets/sfx/Show_Your_Work.ogg','assets/sfx/Show_Your_Work.mp3']);

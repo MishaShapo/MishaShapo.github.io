@@ -27,7 +27,7 @@ SoundIcon = function(index,imageKey,soundKey,labelText,graphics,game){
   this.button = this.game.add.button(this.x,this.y,imageKey,this.playSound,this);
   this.label = this.game.add.text(this.x,this.y+170,labelText,{fill: "#ffffff"});
   this.label.x = this.game.world.width/2 - this.label.width/2;
-  graphics.drawRoundedRect(this.x - 15, this.y - 15,280 + 30,222 + 10,15);
+  graphics.drawRoundedRect(this.x - 15, this.y - 15,288 + 30,222 + 10,15);
   this.game.world.bringToTop(this.pause);
   
 }
