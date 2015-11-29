@@ -1,3 +1,4 @@
+var JeffreySoundboard = JeffreySoundboard || {};
 SoundIcon = function(index,imageKey,soundKey,labelText,graphics,game){
   this.game = game;
   this.x = this.game.world.width / 2 - 140
@@ -73,6 +74,6 @@ JeffreySoundboard.Game.prototype = {
         }
       },this);
        
-       this.game.world.setBounds(0, 0, 570, 8700);
+       this.game.world.setBounds(0, 0, 560, 8700);
     }
 };

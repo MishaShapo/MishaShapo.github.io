@@ -1,7 +1,7 @@
+var JeffreySoundboard = JeffreySoundboard || {};
 JeffreySoundboard.Preloader = function(game) {
     this.preloadBar = null;
     this.titleText = null;
-    this.ready = false;
     console.log('preloader constructor');
 };
 
@@ -71,7 +71,7 @@ JeffreySoundboard.Preloader.prototype = {
         this.load.audio('Whoops',['assets/sfx/Whoops.ogg','assets/sfx/Whoops.mp3']);
         this.load.audio('YESSS',['assets/sfx/YESSS.ogg','assets/sfx/YESSS.mp3']);
         this.load.audio('You_Did_This_To_Us',['assets/sfx/You_Did_This_To_Us.ogg','assets/sfx/You_Did_This_To_Us.mp3']);
-        this.load.audio('Is It Safe',['assets/sfx/is it safe.ogg','assets/sfx/is it safe.mp3']);
+//        this.load.audio('Is It Safe',['assets/sfx/is it safe.ogg','assets/sfx/is it safe.mp3']);
 
 
         console.log("even finished preloading!");
@@ -82,8 +82,7 @@ JeffreySoundboard.Preloader.prototype = {
 	},
 
 	update: function () {
-        if(this.cache.isSoundDecoded('Is It Safe') && this.ready == false) {
-            this.ready = true;
+        if(!this.load.isLoading) {
             this.state.start('Game');
         }
 	}
