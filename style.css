@@ -40,6 +40,10 @@ a {
   color: lawngreen
 }
 
+h2 {
+  font-size: 2.7em;
+}
+
 /*
 #game-container {
   max-width: 570px;
