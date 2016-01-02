@@ -31,6 +31,11 @@ Bagels.PreloadState = {
     this.load.image('table_large','assets/images/platform_large.png');
     this.load.image('table_medium','assets/images/platform_medium.png');
     this.load.image('table_small','assets/images/platform_small.png');
+    
+    this.load.image('coin','assets/images/coin.png');
+    this.load.image('pendulum_ass','assets/images/pendulum_mass.png');
+    this.load.image('pendulum_string','assets/images/pendulum_string.png');
+    this.load.image('pendulum_shadow','assets/images/pendulum_shadow.png');
 
 
     

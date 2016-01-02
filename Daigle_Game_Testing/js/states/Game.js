@@ -6,21 +6,13 @@ Bagels.GameState = {
     this.currentLayer = -1;
     this.maxLayer = 2;
     
-    this.JUMPING_SPEED = 400;
+    this.JUMPING_SPEED = 500;
     this.LEVEL_SPEED = 200;
     
     this.game.physics.arcade.gravity.y = 1000;
     
     this.cursors = this.game.input.keyboard.createCursorKeys();
-    this.layers = [];
-    this.gidMappings = {
-      74: 'purple_center',
-      51: 'purple_right',
-      75: 'purple_left',
-      25: 'marker',
-      121: 'endOfLayer'
-    };
-    this.endOfLayerMarker = null;
+
     
     this.tableKeys = this.game.cache.getKeys(Phaser.Cache.IMAGE).filter(function(key){
       return key.indexOf('table') !== -1;
@@ -31,71 +23,39 @@ Bagels.GameState = {
     });
     
     this.currentItem = null;
+    this.myCoins = 0;
+    this.game.time.advancedTiming = true;
+    this.isJumping = false;
     
   },
   create: function(){
     
-    this.player = this.add.sprite(50,50,'runner');
-    this.player.anchor.setTo(0.5);
-    this.player.animations.add('walking',[0,1,2,1],6,true,true);
-    this.game.physics.arcade.enable(this.player);
-    this.player.body.collideWorldBounds = true;
-    this.player.customParams = {};
-    
-    
-    this.spritePool = this.add.group();
-    //this.spritePool.enableBody = true;
-    this.imageSizes = {};
-    this.tableKeys.forEach(function(key){
-      var image = this.cache.getImage(key);
-      this.imageSizes[key] = {
-        w: image.width,
-        h: image.height
-      }
-    },this);
-    
-    this.shelfKeys.forEach(function(key){
-      var image = this.cache.getImage(key);
-      this.imageSizes[key] = {
-        w: image.width,
-        h: image.height
-      }
-    },this);
-    
-    console.log(this.imageSizes);
-    
-    this.leftPool = this.add.group();
-    this.leftPool.enableBody = true;
-    this.centerPool = this.add.group();
-    this.centerPool.enableBody = true;
-    this.rightPool = this.add.group();
-    this.rightPool.enableBody = true;
-    this.markerPool = this.add.group();
-    this.markerPool.enableBody = true;
-    
-    this.spritePools = {
-      "purple_center" : this.centerPool,
-      "purple_left" : this.leftPool,
-      "purple_right": this.rightPool,
-      "marker" : this.markerPool,
-    }
-    
+    this.createSprites();
     
     this.loadLevel();
     
-    this.createOnscreenControls();
+    this.createControls();
+    
     
     this.input.keyboard.addKey(Phaser.KeyCode.W).onDown.add(function(){
-      this.time.slowMotion += 0.5;
-      console.log('slower');
+      //this.time.slowMotion += 0.5;
+      //console.log('slower');
     },this);
     
      this.input.keyboard.addKey(Phaser.KeyCode.S).onDown.add(function(){
-      this.time.slowMotion -= 0.5;
-      console.log('faster');
+      //this.time.slowMotion -= 0.5;
+     // console.log('faster');
     },this);
     
-    this.currentItem = this.spawnWithKey(this.game.width,this.game.height - 35,'table_small')
+//    this.input.onDown.add(function(){
+//      this.player.body.velocity.x = -100;
+//    },this);
+    
+    this.input.keyboard.addKey(Phaser.KeyCode.H).onDown.add(function(){
+      console.log("FPS: " + this.game.time.fps);
+    },this)
+    
+    this.currentItem = this.spawnWithKey(this.game.width,this.game.height - 35,'table_small',this.spritePool);
   },
   update: function(){
     
@@ -108,36 +68,132 @@ Bagels.GameState = {
       }
     },this);
     
+    this.coinPool.forEachAlive(function(coin){
+      this.game.physics.arcade.overlap(this.player,coin,this.collectCoin);
+      
+      if(coin.right < 0){
+        coin.kill();
+      }
+    },this);
+    
+    this.pendulumPool.forEachAlive(function(pendulum){
+      pendulum.rotation = this.pendulumTweenData[pendulum.customParams.index].rotation;
+      pendulum.customParams.index += pendulum.customParams.step;
+      if(pendulum.customParams.index >= this.pendulumTweenData.length){
+        pendulum.kill();
+      }
+    },this);
+    
+    this.shadowPool.forEachAlive(function(shadow){
+      if(shadow.customParams.growing){
+        shadow.scale.setTo(this.shadowTweenData[shadow.customParams.index]['scale.x'],this.shadowTweenData[shadow.customParams.index]['scale.y']);
+        shadow.customParams.index++;
+        if(shadow.customParams.index >= this.shadowTweenData.length){
+          shadow.customParams.pendulum.revive();
+          shadow.customParams.growing = false;
+        }
+      } else {
+        
+        shadow.x = shadow.customParams.pendulum.getChildAt(0).toGlobal(this.game.world.position).x;
+        //shadow.x = shadow.customParams.pendulum.x + length * Math.cos(Math.PI/2 + shadow.customParams.pendulum.rotation) + shadow.customParams.pendulum.getChildAt(0).body.width;
+        if(shadow.right < 0){
+          shadow.kill();
+        }
+      }
+      
+     
+    },this);
+    
     if(this.currentItem.right < this.game.width){
-
       this.loadNextItem();
     } 
     
     
-    if((this.cursors.up.isDown || this.player.customParams.mustJump) && (this.player.body.blocked.down || this.player.body.touching.down)){
-      this.player.body.velocity.y = -this.JUMPING_SPEED;
-      this.player.customParams.mustJump = false;
+//    if((this.cursors.up.isDown) && (this.player.body.blocked.down || this.player.body.touching.down)){
+//      this.player.body.velocity.y = -this.JUMPING_SPEED;
+//    }
+    
+    if(this.game.input.activePointer.isDown){
+      if(!this.isJumping){
+      this.player.body.velocity.y -= this.JUMPING_SPEED;
+      this.isJumping = true;
+      }
+    } else if(this.game.input.activePointer.isUp){
+      this.isJumping = false;
     }
     
   },
-//  render: function(){
-////   this.leftPool.forEach(function(floor){
-////      this.game.debug.body(floor);
-////    },this);
-////    
-////    this.centerPool.forEach(function(floor){
-////      this.game.debug.body(floor);
-////    },this);
-////    
-////    this.rightPool.forEach(function(floor){
-////      this.game.debug.body(floor);
-////    },this);
-//    
+  render: function(){
+    
+ //     this.game.debug.body(this.currentItem);
 //    this.spritePool.forEachAlive(function(item){
 //      this.game.debug.body(item);
 //    },this);
-//    
-//  },
+    
+  },
+  createSprites: function(){
+    
+    
+    this.pendulumPool = this.add.group();
+    this.shadowPool = this.add.group();
+    
+//    this.pendulumString = this.add.tileSprite(50,100,35,35,'pendulum_tring');
+//    this.pendulumString.anchor.setTo(0.5,0);
+//    this.pendulumMass = this.add.sprite(0,35,'pendulumMass');
+//    this.pendulumMass.anchor.setTo(0.5,0);
+//    this.game.physics.arcade.enable(this.pendulumMass);
+//    this.pendulumMass.body.allowGravity = false;
+//    this.pendulumMass.body.immovable = true;
+//    this.pendulumString.addChild(this.pendulumMass);
+//    this.pendulumShadow
+    
+//    this.pendulumString.rotation = -Math.PI/2;
+    
+//    this.pendulumTween = this.game.add.tween(this.pendulumString).to({rotation: (3/5*Math.PI)},2000,Phaser.Easing.Quadratic.In);
+//    this.pendulumTween.onComplete.add(function(sprite,tween){
+//      sprite.reset(50,-100);
+//      sprite.rotation = -3/5 * Math.PI;
+//    },this);
+    
+    this.pendulumTweenData = this.game.make.tween({rotation: -2/3 * Math.PI}).to({rotation: 1/3 * Math.PI},1000 * 5).generateData();
+    
+    this.shadowTweenData = this.game.make.tween({'scale.x': 0, 'scale.y' : 0}).to({'scale.x' : 1, 'scale.y' : 1},2000).generateData();
+    
+    console.log('pendulumTweenData data' );
+    console.log(this.pendulumTweenData );
+    
+    
+    this.spritePool = this.add.group();
+    this.spritePool.enableBody = true;
+    this.coinPool = this.add.group();
+    this.coinPool.enableBody = true;
+    this.game.world.sendToBack(this.coinPool);
+    this.game.world.sendToBack(this.spritePool);
+    
+    this.player = this.add.sprite(50,50,'runner');
+    this.player.anchor.setTo(0.5);
+    this.player.animations.add('walking',[0,1,2,1],6,true,true);
+    this.game.physics.arcade.enable(this.player);
+    this.player.body.collideWorldBounds = true;
+    
+    this.imageSizes = {};
+    this.tableKeys.forEach(function(key){
+      var image = this.cache.getImage(key);
+      this.imageSizes[key] = {
+        w: image.width,
+        h: image.height
+      };
+    },this);
+    
+    this.shelfKeys.forEach(function(key){
+      var image = this.cache.getImage(key);
+      this.imageSizes[key] = {
+        w: image.width,
+        h: image.height
+      };
+    },this);
+    
+  },
   loadLevel: function(){
     
     //this.maps.push(this.add.tilemap(stage));
@@ -150,128 +206,10 @@ Bagels.GameState = {
     this.backgroundLayer = this.map.createLayer('backgroundLayer');
     //send background to back
     this.game.world.sendToBack(this.backgroundLayer);
-    //this.backgroundLayer.resizeWorld();
-    //this.currentCollisionLayer.visible = false;
-    
-    //this.loadNextStage();
-
-//    var centerSprites = this.map.createFromTiles(74,null,'purple_center','stage1',this.floorPool);
-//    
-//    var rightSprites = this.map.createFromTiles(51,null,'purple_right','stage1',this.floorPool);
-//    
-//    var leftSprites = this.map.createFromTiles(75,null,'purple_left','stage1',this.floorPool);
-    
-//    this.floorPool.setAll('body.immovable', true);
-//    this.floorPool.setAll('body.allowGravity',false);
-//    this.floorPool.setAll('body.velocity.x',-this.LEVEL_SPEED);
-//    
-    //this.floorPool.children[0].body
-//    console.log('Center Sprites : ' + centerSprites );
-//    console.log('Left Sprites : ' + leftSprites );
-//    console.log('Right Sprites : ' + rightSprites );
-//    
-  },
-  createOnscreenControls: function(){
-    this.leftArrow = this.add.button(20,this.game.height-60,'arrowButton');
-    this.rightArrow = this.add.button(110,this.game.height-60,'arrowButton');
-    this.actionButton = this.add.button(this.game.width - 100,this.game.height  -60,'actionButton');
-    
-    this.leftArrow.alpha = 0.5;
-    this.rightArrow.alpha = 0.5;
-    this.actionButton.alpha = 0.5;
-    
-    this.leftArrow.fixedToCamera = true;
-    this.rightArrow.fixedToCamera = true;
-    this.actionButton.fixedToCamera = true;
-    
-    //jump
-    this.actionButton.events.onInputDown.add(function(){
-      this.player.customParams.mustJump = true;
-    },this);
-    this.actionButton.events.onInputUp.add(function(){
-      this.player.customParams.mustJump = false;
-    },this);
-    
-    //left
-    this.leftArrow.events.onInputDown.add(function(){
-      this.player.customParams.isMovingLeft = true;
-    },this);
-    this.leftArrow.events.onInputUp.add(function(){
-      this.player.customParams.isMovingLeft = false;
-    },this);
-//    this.leftArrow.events.onInputOver.add(function(){
-//      this.player.customParams.isMovingLeft = true;
-//    },this);
-//    this.leftArrow.events.onInputOut.add(function(){
-//      this.player.customParams.isMovingLeft = false;
-//    },this);
-    
-    //right
-    this.rightArrow.events.onInputDown.add(function(){
-      this.player.customParams.isMovingRight = true;
-    },this);
-    this.rightArrow.events.onInputUp.add(function(){
-      this.player.customParams.isMovingRight = false;
-    },this);
-//    this.rightArrow.events.onInputOver.add(function(){
-//      this.player.customParams.isMovingRight = true;
-//    },this);
-//    this.rightArrow.events.onInputOut.add(function(){
-//      this.player.customParams.isMovingRight = false;
-//    },this);
-  },
-  loadNextStage: function(){
-    this.currentLayer++;
-    if(this.currentLayer > this.maxLayer){
-      this.currentLayer = 0;
-    }
-    if(this.layers[this.currentLayer] == null){
-      this.layers[this.currentLayer] = this.map.createLayer('stage' + this.currentLayer);
-    }
-    this.currentCollisionLayer = this.layers[this.currentLayer];
-    this.currentCollisionLayer.visible = false;
-    
-    this.createObstaclesFromCurrentLayer();
-    
-  },
-  createObstaclesFromCurrentLayer: function(){
-    var rightMost = 0;
-    var tile = null;
-    for(var i = 0; i < this.map.height; i++){
-      for(var j = 0; j < this.map.width; j++){
-        tile = this.currentCollisionLayer.layer.data[i][j];
-        if(this.gidMappings[tile.index] != null){
-          var floorTile = this.spritePools[tile.properties.key].getFirstExists(false);
-          if(!floorTile){
-            floorTile = new Phaser.Sprite(this.game,this.game.width + tile.x * this.map.tileWidth,tile.y * this.map.tileHeight - this.map.tileHeight,tile.properties.key);
-          
-          }
-          else {
-            floorTile.reset(this.game.width + tile.x * this.map.tileHeight,tile.y * this.map.tileHeight - this.map.tileHeight);
-          }
-          if(j > rightMost){
-            this.endOfLayerMarker = floorTile;
-            rightMost = j;
-          }
-          this.spritePools[tile.properties.key].add(floorTile);
-        }
-      }
-    }
-//    this.currentCollisionLayer.layer.data.forEach(function(row){
-//      row.forEach(function(tile){
-//        
-//      },this);
-//    },this);
-    
-    for(var pool in this.spritePools){
-      this.spritePools[pool].setAll('body.immovable',true);
-      this.spritePools[pool].setAll('body.allowGravity',false);
-      this.spritePools[pool].setAll('body.velocity.x',-this.LEVEL_SPEED);
-      this.spritePools[pool].setAll('body.friction.x',0);
-    }
   },
   loadNextItem: function(){
-    this.obstacleChance = this.game.rnd.realInRange(0,0.49);
+    this.obstacleChance = this.game.rnd.realInRange(0,0.74);
+//    this.obstacleChance = 0.6;
     if(this.obstacleChance < 0.25){
       this.spawnTable();
     } else if(this.obstacleChance < 0.5){
@@ -287,14 +225,11 @@ Bagels.GameState = {
     } else{
       this.spawnVanDeGraff();
     }
-    
-    
   },
-  spawnWithKey: function(x,y,key){
-    var sprite = this.spritePool.getFirstExists(false);
+  spawnWithKey: function(x,y,key,pool){
+    var sprite = pool.getFirstExists(false);
     if(!sprite){
-      sprite = new Phaser.Sprite(this.game,x,y,key);
-      this.game.physics.arcade.enable(sprite);
+      sprite = pool.create(x,y,key);
       sprite.body.immovable = true;
       sprite.body.allowGravity = false;
       sprite.body.friction.x = 0;
@@ -306,28 +241,108 @@ Bagels.GameState = {
     
     sprite.body.velocity.x = -this.LEVEL_SPEED;
     
-    this.spritePool.add(sprite);
-    
     return sprite;
   },
   spawnTable: function(){
     var x = this.game.rnd.between(this.game.width + this.currentItem.width,this.game.width + this.currentItem.width + 200);
-    this.currentItem = this.spawnWithKey(x,this.game.height - 35,this.game.rnd.pick(this.tableKeys));
+    this.currentItem = this.spawnWithKey(x,this.game.height - this.map.tileHeight,this.game.rnd.pick(this.tableKeys),this.spritePool);
   },
   spawnShelf: function(){
     var x = this.game.rnd.between(this.game.width + this.currentItem.width,this.game.width + this.currentItem.width + 200);
-    this.currentItem = this.spawnWithKey(x,75,this.game.rnd.pick(this.shelfKeys));
+    this.currentItem = this.spawnWithKey(x,this.map.tileHeight * 3,this.game.rnd.pick(this.shelfKeys),this.spritePool);
   },
   spawnCoins: function(){
-    
+    var sprite = null, obj = null, lastMarker = null;
+    var rndCoin = this.game.rnd.between(1,3);
+    this.map.objects['coins' + rndCoin].forEach(function(obj){ 
+      sprite = this.coinPool.getFirstExists(false);
+      if(!sprite){
+        sprite = this.coinPool.create(obj.x,obj.y - this.map.tileHeight,'coin');
+        sprite.body.immovable = true;
+        sprite.body.allowGravity = false;
+        sprite.body.velocity.x = -this.LEVEL_SPEED;
+      } else {
+        sprite.reset(obj.x,obj.y - this.map.tileHeight);
+      }
+      
+      if(!lastMarker || obj.x > lastMarker.x){
+        lastMarker = sprite;
+      }
+      
+    },this);
+    this.coinPool.setAll('body.velocity.x',-this.LEVEL_SPEED);
+    this.currentItem = lastMarker;
   },
   spawnPendulum: function(){
+    var length = this.rnd.between(this.map.tileHeight,this.game.height-this.map.tileHeight);
+    var dur =  ~~(1/2 * Math.PI * length + 1800);
+    console.log('tween dur : ' + dur + ", length : " + length)
+    this.pendulumTween.updateTweenData('duration',dur);
+    this.pendulumString.height = length;
+    this.pendulumString.reset(50,-10);
+    this.pendulumMass.reset(0,length);
     
+    this.pendulumTween.start();
   },
   spawnCapacitor: function(){
     
   },
   spawnVanDeGraff: function(){
     
+  },
+  collectCoin: function(player,coin){
+    coin.kill();
+    this.myCoins++;
+  },
+  createControls: function(){
+   // this.game.input.
+  },
+  createPendulum: function(length){
+    var pendulum = this.pendulumPool.getFirstExists(false);
+    if(!pendulum){
+      pendulum = new Phaser.TileSprite(this.game,50,-this.map.tileHeight,this.map.tileHeight,length,'pendulum_string');
+      pendulum.anchor.setTo(0.5,0);
+      //pendulum.revive();
+      var mass = new Phaser.Sprite(this.game,0,length,'pendulum_mass');
+      mass.anchor.setTo(0.5,0);
+      this.game.physics.arcade.enable(mass);
+      mass.body.allowGravity = false;
+      mass.body.immovable = true;
+      pendulum.addChild(mass);
+      console.log('creating new pendulum')
+      
+    } else {
+      pendulum.height = length;
+      pendulum.getChildAt(0).revive();
+    }
+    pendulum.reset(50,-this.map.tileHeight);
+    pendulum.rotation = -2/3 * Math.PI;
+    pendulum.getChildAt(0).position.setTo(0,length);
+    pendulum.customParams = {};
+    pendulum.customParams.index = 0;
+    pendulum.customParams.step = ~~(5000 / (1/2 * Math.PI * length + 1800)); 
+    console.log('mass : ')
+    console.log(mass);
+    pendulum.kill();
+    
+    var shadow = this.shadowPool.getFirstExists(false);
+//            shadow.x = shadow.customParams.pendulum.getChildAt(0).toGlobal(this.game.world.position).x;
+    var x = pendulum.x + length * Math.cos(Math.PI/2 + pendulum.rotation) + pendulum.getChildAt(0).body.width;
+    console.log('shadow x : ' + x);
+    if(!shadow){
+            shadow = new Phaser.Sprite(this.game,x,this.game.height - this.map.tileHeight/3 * 2,'pendulum_shadow');
+    } else {
+      shadow.position.setTo(x,this.game.height - this.map.tileHeight/3 * 2);
+    }
+    shadow.anchor.setTo(0.5);
+    shadow.scale.setTo(0);
+    
+    shadow.customParams = {};
+    shadow.customParams.growing = true;
+    shadow.customParams.pendulum = pendulum;
+    shadow.customParams.index = 0;
+    
+    this.pendulumPool.add(pendulum);
+    this.shadowPool.add(shadow);
   }
 }
