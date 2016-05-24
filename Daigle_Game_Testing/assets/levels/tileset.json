@@ -1,0 +1,12 @@
+{ "columns":10,
+ "image":"daiglestiles.png",
+ "imageheight":320,
+ "imagewidth":320,
+ "margin":0,
+ "name":"tileset",
+ "spacing":0,
+ "tilecount":100,
+ "tileheight":32,
+ "tilewidth":32,
+ "transparentcolor":"#936543"
+}
